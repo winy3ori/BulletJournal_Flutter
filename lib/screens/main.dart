@@ -1,4 +1,8 @@
+import 'package:bj/modal/add_todo_modal.dart';
+import 'package:bj/service/todo_service.dart';
+
 import 'package:flutter/material.dart';
+
 import 'mandalart_screen.dart';
 import 'habit_tracker_screen.dart';
 import 'mood_tracker_screen.dart';
@@ -9,14 +13,11 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-
-  // 각 하단바 항목에 해당하는 위젯 목록
   final List<Widget> _widgetOptions = <Widget>[
     const DayScreen(),
     const MandalartScreen(),
@@ -27,44 +28,69 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // 선택된 인덱스 업데이트
+      _selectedIndex = index;
     });
   }
+
+ void _showAddTodoModal() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) {
+      return AddTodoModal(
+        onAdd: (title, description, type, date, priority) async {
+          TodoService todoService = TodoService();
+
+          // userId 값을 추가하여 서버로 데이터 전송
+          final userId = 1; // 로그인한 사용자 ID 또는 필요한 값으로 변경
+
+          bool success = await todoService.createTodo(
+            userId: userId, // userId 추가
+            title: title,
+            description: description,
+            type: type.toString(),
+            priority: priority.toString(),
+            date: date,
+          );
+
+          if (success) {
+            print('Todo created successfully');
+          } else {
+            print('Failed to create Todo');
+          }
+        },
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          // 메뉴 버튼 (왼쪽 끝)
           IconButton(
             icon: const Icon(Icons.menu),
             onPressed: () {},
           ),
-          // 날짜 버튼 (가운데)
           Expanded(
             child: Center(
               child: TextButton(
                 onPressed: () {},
                 child: const Text(
                   '2024년 11월 4일',
-                  style: TextStyle(color: Colors.black), // 검정색으로 설정
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
             ),
           ),
-          // 추가 버튼 (오른쪽 끝)
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // 추가 버튼 클릭 시 동작
-            },
+            onPressed: _showAddTodoModal, // 모달 창 표시 함수 호출
           ),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex), // 선택된 화면 표시
-
-      
+      body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -89,8 +115,8 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black, // 선택된 항목의 색상
-        unselectedItemColor: Colors.grey, // 선택되지 않은 항목의 색상
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
       ),
     );
